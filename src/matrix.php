@@ -63,7 +63,7 @@ class matrix
         $this->matrix = $matrix;
         $this->matrix_original = $matrix;
 
-        $this->evalAll();
+        $this->evaluate();
     }
 
     /**
@@ -103,7 +103,7 @@ class matrix
         $this->matrix[] = $row;
         $this->matrix_original[] = $row;
 
-        $this->evalAll();
+        $this->evaluate();
     }
 
     /**
@@ -121,7 +121,7 @@ class matrix
             $this->matrix_original[$rowIndex][] = $value;
         }
 
-        $this->evalAll();
+        $this->evaluate();
     }
 
     /**
@@ -147,7 +147,7 @@ class matrix
                 array_slice($this->matrix_original, $index + 1)
             );
 
-            $this->evalAll();
+            $this->evaluate();
         }
     }
 
@@ -490,7 +490,7 @@ class matrix
 
         return $sql . ';' . PHP_EOL;
     }
-    
+
     /**
      * Fill a horizontal range
      * 
@@ -509,11 +509,11 @@ class matrix
 
         $this->temporalDisableEvalAll = true;
         for ($i = $from; $i <= $to; $i++) {
-            $this->setValue($row, $i, $value);
+            $this->set($row, $i, $value);
         }
         $this->temporalDisableEvalAll = false;
 
-        $this->evalAll();
+        $this->evaluate();
     }
 
     /**
@@ -534,11 +534,11 @@ class matrix
 
         $this->temporalDisableEvalAll = true;
         for ($i = $from; $i <= $to; $i++) {
-            $this->setValue($i, $column, $value);
+            $this->set($i, $column, $value);
         }
         $this->temporalDisableEvalAll = false;
 
-        $this->evalAll();
+        $this->evaluate();
     }
 
     /**
@@ -551,7 +551,7 @@ class matrix
      * 
      * @return void
      */
-    public function evalCell(int $row, int $column): void
+    public function eval(int $row, int $column): void
     {
         $this->validateCoordinates($row, $column);
 
@@ -595,14 +595,14 @@ class matrix
      * 
      * @return void
      */
-    public function setValue(int $row, int $column, $value): void
+    public function set(int $row, int $column, $value): void
     {
         $this->validateCoordinates($row, $column);
 
         $this->matrix_original[$row][$column] = $value;
         $this->matrix[$row][$column] = $value;
 
-        $this->evalAll();
+        $this->evaluate();
     }
 
     /**
@@ -615,11 +615,11 @@ class matrix
      * 
      * @return mixed
      */
-    public function getValue(int $row, int $column)
+    public function get(int $row, int $column)
     {
         $this->validateCoordinates($row, $column);
 
-        $this->evalCell($row, $column);
+        $this->eval($row, $column);
 
         return $this->matrix[$row][$column];
     }
@@ -629,7 +629,7 @@ class matrix
      * 
      * @return void
      */
-    public function evalAll(): void
+    public function evaluate(): void
     {
         if ($this->temporalDisableEvalAll) {
             return;
@@ -642,7 +642,7 @@ class matrix
             foreach ($row as $colIndex => $col) {
                 if ($col instanceof \Closure) {
                     try {
-                        $this->evalCell($rowIndex, $colIndex);
+                        $this->eval($rowIndex, $colIndex);
                     } catch (\Exception $e) {
                         $this->matrix[$rowIndex][$colIndex] = $e->getMessage();
                     }
@@ -662,7 +662,7 @@ class matrix
      * 
      * @return array
      */
-    public function getHorizontal(int $row, int $from, int $to): array
+    public function horizontal(int $row, int $from, int $to): array
     {
         if ($from < 0 || $to > count($this->matrix[0])) {
             throw new InvalidArgumentException('Invalid range');
@@ -682,7 +682,7 @@ class matrix
      * 
      * @return array
      */
-    public function getVertical(int $column, int $from, int $to): array
+    public function vertical(int $column, int $from, int $to): array
     {
         if ($from < 0 || $to > count($this->matrix)) {
             throw new InvalidArgumentException('Invalid range');
