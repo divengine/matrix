@@ -4,11 +4,11 @@ A versatile utility for efficient manipulation of matrix data, providing methods
 
 ## Features
 
+- Spreadsheet-like functionality
 - Controlled matrix data manipulation
 - Validate matrix integrity
 - Format data in various output formats
 - Simplify matrix-related tasks
-- Spreadsheet-like functionality
 
 ## Requirements
 
