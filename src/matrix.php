@@ -2,6 +2,34 @@
 
 namespace divengine;
 
+/**
+ * [[]] Div PHP matrix
+ *
+ * A versatile utility for efficient manipulation of matrix data, providing methods 
+ * for adding and removing rows, validating matrix integrity, and formatting data 
+ * in various output formats. It also supports closures for dynamic values (spreadsheet-like).
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program as the file LICENSE.txt; if not, please see
+ * https://www.gnu.org/licenses/gpl-3.0.txt
+ *
+ * @package divengine/matrix
+ * @author  Rafa Rodriguez @rafageist [https://rafageist.com]
+ * @version 1.0.0
+ *
+ * @link    https://divengine.org/docs/div-php-matrix
+ * @link    https://github.com/divengine/matrix
+ */
+
 use SimpleXMLElement;
 use InvalidArgumentException;
 
@@ -462,6 +490,7 @@ class matrix
 
         return $sql . ';' . PHP_EOL;
     }
+    
     /**
      * Fill a horizontal range
      * 
@@ -512,7 +541,6 @@ class matrix
         $this->evalAll();
     }
 
-
     /**
      * Evaluate a cell
      * 
@@ -535,6 +563,16 @@ class matrix
         }
     }
 
+    /**
+     * Validate coordinates
+     * 
+     * @param int $row
+     * @param int $column
+     * 
+     * @throws InvalidArgumentException
+     * 
+     * @return void
+     */
     public function validateCoordinates(int $row, int $column): void
     {
         // non negative indexes

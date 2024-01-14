@@ -37,13 +37,21 @@ echo $table->format('txt', true);
 
 $table->addColumn();
 $table->setValue(0, 3, "Amount");
-$table->fillVertical(3, 1, 3, fn ($row, $col, matrix $matrix) => $matrix->getValue($row, $col - 1) * $matrix->getValue($row, $col - 2));
-$table->addRow(["Total", "", "", fn ($row, $col, matrix $matrix) => array_sum($matrix->getVertical($col, 1, $row - 1))]);
+$table->fillVertical(3, 1, 3, 
+    fn ($row, $col, matrix $matrix) 
+        => $matrix->getValue($row, $col - 1) * $matrix->getValue($row, $col - 2));
+$table->addRow(["Total", "", "", 
+    fn ($row, $col, matrix $matrix) 
+        => array_sum($matrix->getVertical($col, 1, $row - 1))]);
 echo $table->format('txt', true);
 
 $table->addColumn();
 $table->setValue(0, 4, "Cumul");
-$table->fillVertical(4, 1, 3, fn ($row, $col, matrix $matrix) => $row == 1 ? $matrix->getValue($row, $col - 1) : $matrix->getValue($row - 1, $col) + $matrix->getValue($row, $col - 1));
+$table->fillVertical(4, 1, 3, 
+    fn ($row, $col, matrix $matrix) 
+        => $row == 1 
+            ? $matrix->getValue($row, $col - 1) 
+            : $matrix->getValue($row - 1, $col) + $matrix->getValue($row, $col - 1));
 echo $table->format('txt', true);
 
 $table->setValue(1, 1, 20);
@@ -101,4 +109,3 @@ Array
     
 ```
 
-## Documentation
