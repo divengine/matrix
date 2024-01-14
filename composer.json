@@ -1,0 +1,30 @@
+{
+    "name": "divengine/matrix",
+    "license": "GPL-3.0-or-later",
+    "description": "Div PHP Matrix",
+    "keywords": [
+      "matrix manipulation",
+      "spreadsheets features"
+    ],
+    "homepage": "https://divengine.org",
+    "version": "1.0.0",
+    "authors": [
+      {
+        "name": "Rafa Rodriguez",
+        "email": "rafageist@divengine.com",
+        "homepage": "https://rafageist.com",
+        "role": "Founder"
+      }
+    ],
+    "require": {
+      "php": ">=8.0.0"
+    },
+    "autoload": {
+      "psr-4": {
+        "divengine\\": "src/"
+      }
+    },
+    "require-dev": {
+      "phpstan/phpstan": "^1.10"
+    }
+  }

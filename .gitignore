@@ -1,0 +1,4 @@
+test/*
+doc/*
+vendor/*
+composer.lock
