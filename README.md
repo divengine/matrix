@@ -1,4 +1,4 @@
-# Div PHP Matrix 1.0
+# Div PHP Matrix 1.1
 
 A versatile utility for efficient manipulation of matrix data, providing methods for adding and removing rows, validating matrix integrity, and formatting data in various output formats such as CSV, XML, JSON, HTML, Markdown, TXT, YAML and SQL. Simplify matrix-related tasks with this comprehensive utility designed for seamless integration into diverse applications.
 

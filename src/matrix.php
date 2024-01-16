@@ -694,4 +694,28 @@ class matrix
         }
         return $result;
     }
+
+    /**
+     * Group by a column
+     * 
+     * @param int $column
+     * @param bool $firstRowAreHeaders
+     * 
+     * @return array
+     */
+    public function groupBy(int $column, bool $firstRowAreHeaders = false): array
+    {
+        $data = $this->matrix;
+        
+        $result = [];
+        if ($firstRowAreHeaders) {
+            $headers = array_shift($data);
+        }
+
+        foreach ($data as $row) {
+            $result[$row[$column]][] = $row;
+        }
+
+        return $result;
+    }
 }
