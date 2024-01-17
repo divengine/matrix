@@ -88,10 +88,6 @@ class matrix
      */
     public function validateMatrix(array $matrix): void
     {
-        if (empty($matrix) || !is_array($matrix[0]) || empty($matrix[0])) {
-            throw new InvalidArgumentException('Matrix must have at least one row with string headers');
-        }
-
         $numColumns = count($matrix[0]);
         foreach ($matrix as $row) {
             if (!is_array($row) || count($row) !== $numColumns) {
