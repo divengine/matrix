@@ -24,7 +24,7 @@ namespace divengine;
  *
  * @package divengine/matrix
  * @author  Rafa Rodriguez @rafageist [https://rafageist.com]
- * @version 1.0.0
+ * @version 1.1.0
  *
  * @link    https://divengine.org/docs/div-php-matrix
  * @link    https://github.com/divengine/matrix
@@ -35,12 +35,23 @@ use InvalidArgumentException;
 
 class matrix
 {
+    public static $version = '1.1.0';
     private $matrix;
     private $matrix_original;
-
     private $evaluatedCells = [];
+    private static $disableEvallAll = false;
+    public const FORMAT_CSV = "CSV";
+    public const FORMAT_XML = "XML";
+    public const FORMAT_JSON = "JSON";
+    public const FORMAT_JSON_OBJECTS = "JSON_OBJECTS";
+    public const FORMAT_SERIALIZE = "SERIALIZE";
+    public const FORMAT_HTML = "HTML";
+    public const FORMAT_MARKDOWN = "MARKDOWN";
+    public const FORMAT_YAML = "YAML";
+    public const FORMAT_TXT = "TXT";
+    public const FORMAT_SQL = "SQL";
 
-    private $temporalDisableEvalAll = false;
+    public static $worksheet = [];
 
     /**
      * Constructor
@@ -51,7 +62,6 @@ class matrix
      */
     public function __construct(array $matrix)
     {
-
         // convert object rows to array
         foreach ($matrix as $rowIndex => $row) {
             if (is_object($row)) {
@@ -63,7 +73,8 @@ class matrix
         $this->matrix = $matrix;
         $this->matrix_original = $matrix;
 
-        $this->evaluate();
+        self::$worksheet[] = $this;
+        self::evaluateAll();
     }
 
     /**
@@ -92,24 +103,30 @@ class matrix
     /**
      * Add a row
      * 
+     * @param array $row
+     * 
      * @return int
      */
-    public function addRow(array $row): void
+    public function addRow(array $row, bool $onTop = false): void
     {
         if (!$this->validateRow($row)) {
             throw new InvalidArgumentException('Row does not have the same number of elements as the first row');
         }
 
-        $this->matrix[] = $row;
-        $this->matrix_original[] = $row;
+        if ($onTop) {
+            array_unshift($this->matrix, $row);
+            array_unshift($this->matrix_original, $row);
+        } else {
+            $this->matrix[] = $row;
+            $this->matrix_original[] = $row;
+        }
 
-        $this->evaluate();
+        self::evaluateAll();
     }
 
     /**
      * Add a column
      * 
-     * @param string $name
      * @param mixed $value
      * 
      * @return void
@@ -121,7 +138,7 @@ class matrix
             $this->matrix_original[$rowIndex][] = $value;
         }
 
-        $this->evaluate();
+        self::evaluateAll();
     }
 
     /**
@@ -147,7 +164,7 @@ class matrix
                 array_slice($this->matrix_original, $index + 1)
             );
 
-            $this->evaluate();
+            self::evaluateAll();
         }
     }
 
@@ -184,29 +201,29 @@ class matrix
      * 
      * @return string
      */
-    public function format(string $outputFormat, bool $firstRowAreHeaders = false): string
+    public function format(string $outputFormat, bool $firstRowAsHeaders = false): string
     {
         switch (strtoupper($outputFormat)) {
-            case 'CSV':
+            case self::FORMAT_CSV:
                 return $this->formatCSV();
-            case 'XML':
-                return $this->formatXML(firstRowAreHeaders: $firstRowAreHeaders);
-            case 'JSON':
-                return $this->formatJSON($firstRowAreHeaders);
-            case 'JSON_OBJECTS':
-                return $this->formatJSON($firstRowAreHeaders);
-            case 'SERIALIZE':
+            case self::FORMAT_XML:
+                return $this->formatXML(firstRowAsHeaders: $firstRowAsHeaders);
+            case self::FORMAT_JSON:
+                return $this->formatJSON($firstRowAsHeaders);
+            case self::FORMAT_JSON_OBJECTS:
+                return $this->formatJSON($firstRowAsHeaders);
+            case self::FORMAT_SERIALIZE:
                 return $this->formatSerialize();
-            case 'HTML':
-                return $this->formatHTML($firstRowAreHeaders);
-            case 'MARKDOWN':
-                return $this->formatMarkdown($firstRowAreHeaders);
-            case 'YAML':
-                return $this->formatYAML($firstRowAreHeaders);
-            case 'TXT':
-                return $this->formatTXT($firstRowAreHeaders);
-            case 'SQL':
-                return $this->formatSQL('table', $firstRowAreHeaders);
+            case self::FORMAT_HTML:
+                return $this->formatHTML($firstRowAsHeaders);
+            case self::FORMAT_MARKDOWN:
+                return $this->formatMarkdown($firstRowAsHeaders);
+            case self::FORMAT_YAML:
+                return $this->formatYAML($firstRowAsHeaders);
+            case self::FORMAT_TXT:
+                return $this->formatTXT($firstRowAsHeaders);
+            case self::FORMAT_SQL:
+                return $this->formatSQL('table', $firstRowAsHeaders);
             default:
                 throw new InvalidArgumentException('Unsupported format');
         }
@@ -232,15 +249,15 @@ class matrix
      * @see https://www.php.net/manual/en/simplexml.examples-basic.php 
      *     
      * @param string $rootTag
-     * @param bool $firstRowAreHeaders
+     * @param bool $firstRowAsHeaders
      * 
      * @return string     
      */
-    public function formatXML(string $rootTag = 'root', bool $firstRowAreHeaders = false)
+    public function formatXML(string $rootTag = 'root', bool $firstRowAsHeaders = false)
     {
         $xml = new SimpleXMLElement("<{$rootTag}/>");
 
-        if ($firstRowAreHeaders) {
+        if ($firstRowAsHeaders) {
             $fields = $xml->addChild('fields');
             foreach ($this->matrix[0] as $field) {
                 $fields->addChild('field', $field);
@@ -306,15 +323,15 @@ class matrix
      * Format HTML
      * @see https://www.w3schools.com/html/html_tables.asp
      * 
-     * @param bool $firstRowAreHeaders
+     * @param bool $firstRowAsHeaders
      * 
      * @return string
      */
-    public function formatHTML(bool $firstRowAreHeaders = false): string
+    public function formatHTML(bool $firstRowAsHeaders = false): string
     {
         $html = '<table>';
 
-        if ($firstRowAreHeaders) {
+        if ($firstRowAsHeaders) {
             $html .= '<tr>';
             foreach ($this->matrix[0] as $field) {
                 $html .= '<th>' . $field . '</th>';
@@ -346,14 +363,14 @@ class matrix
      * Format Markdown
      * @see https://www.markdownguide.org/extended-syntax/#tables
      * 
-     * @param bool $firstRowAreHeaders
+     * @param bool $firstRowAsHeaders
      * 
      * @return string
      */
-    public function formatMarkdown(bool $firstRowAreHeaders = false): string
+    public function formatMarkdown(bool $firstRowAsHeaders = false): string
     {
         $markdown = '';
-        if ($firstRowAreHeaders) {
+        if ($firstRowAsHeaders) {
             $markdown = '| ' . implode(' | ', $this->matrix[0]) . " |\n";
             $markdown .= '| ' . str_repeat('--- | ', count($this->matrix[0])) . "\n";
             foreach (array_slice($this->matrix, 1) as $row) {
@@ -373,16 +390,16 @@ class matrix
      * (as Sequence of Mappings)
      * @see https://yaml.org/spec/1.2.2/
      * 
-     * @param bool $firstRowAreHeaders
+     * @param bool $firstRowAsHeaders
      * 
      * @return string
      */
-    public function formatYAML(bool $firstRowAreHeaders = false): string
+    public function formatYAML(bool $firstRowAsHeaders = false): string
     {
         $array = $this->matrix;
         $yaml = '';
 
-        if ($firstRowAreHeaders) {
+        if ($firstRowAsHeaders) {
             // Process the first row (column names)
             $headers = array_shift($array);
             $yaml .= 'fields:' . PHP_EOL;
@@ -420,15 +437,15 @@ class matrix
     /**
      * Format TXT
      * 
-     * @param bool $firstRowAreHeaders
+     * @param bool $firstRowAsHeaders
      * 
      * @return string
      * @throws InvalidArgumentException
      */
-    public function formatTXT(bool $firstRowAreHeaders = false): string
+    public function formatTXT(bool $firstRowAsHeaders = false): string
     {
         $txt = '';
-        if ($firstRowAreHeaders) {
+        if ($firstRowAsHeaders) {
             $txt = implode("\t", $this->matrix[0]) . PHP_EOL;
             foreach (array_slice($this->matrix, 1) as $row) {
                 $txt .= implode("\t", $row) . PHP_EOL;
@@ -446,14 +463,14 @@ class matrix
      * Format SQL
      * 
      * @param string $tableName
-     * @param bool $firstRowAreHeaders
+     * @param bool $firstRowAsHeaders
      * 
      * @return string
      */
-    public function formatSQL(string $tableName, bool $firstRowAreHeaders = false): string
+    public function formatSQL(string $tableName, bool $firstRowAsHeaders = false): string
     {
         $sql = '';
-        if ($firstRowAreHeaders) {
+        if ($firstRowAsHeaders) {
 
             // headers as snake case
             $headers = array_map(function ($field) {
@@ -507,13 +524,13 @@ class matrix
             throw new InvalidArgumentException('Invalid range');
         }
 
-        $this->temporalDisableEvalAll = true;
+        self::$disableEvallAll = true;
         for ($i = $from; $i <= $to; $i++) {
             $this->set($row, $i, $value);
         }
-        $this->temporalDisableEvalAll = false;
+        self::$disableEvallAll = false;
 
-        $this->evaluate();
+        self::evaluateAll();
     }
 
     /**
@@ -532,13 +549,13 @@ class matrix
             throw new InvalidArgumentException('Invalid range');
         }
 
-        $this->temporalDisableEvalAll = true;
+        self::$disableEvallAll = true;
         for ($i = $from; $i <= $to; $i++) {
             $this->set($i, $column, $value);
         }
-        $this->temporalDisableEvalAll = false;
+        self::$disableEvallAll = false;
 
-        $this->evaluate();
+        self::evaluateAll();
     }
 
     /**
@@ -602,7 +619,7 @@ class matrix
         $this->matrix_original[$row][$column] = $value;
         $this->matrix[$row][$column] = $value;
 
-        $this->evaluate();
+        self::evaluateAll();
     }
 
     /**
@@ -631,7 +648,7 @@ class matrix
      */
     public function evaluate(): void
     {
-        if ($this->temporalDisableEvalAll) {
+        if (self::$disableEvallAll) {
             return;
         }
 
@@ -648,6 +665,17 @@ class matrix
                     }
                 }
             }
+        }
+    }
+
+    public static function evaluateAll(): void
+    {
+        if (self::$disableEvallAll) {
+            return;
+        }
+
+        foreach (self::$worksheet as $worksheet) {
+            $worksheet->evaluate();
         }
     }
 
@@ -696,26 +724,116 @@ class matrix
     }
 
     /**
-     * Group by a column
+     * Get a range
      * 
-     * @param int $column
-     * @param bool $firstRowAreHeaders
+     * @param int $rowFrom
+     * @param int $columnFrom
+     * @param int $rowTo
+     * @param int $columnTo
+     * 
+     * @throws InvalidArgumentException
      * 
      * @return array
      */
-    public function groupBy(int $column, bool $firstRowAreHeaders = false): array
+    public function range(int $rowFrom, int $columnFrom, int $rowTo, int $columnTo): array
+    {
+        (
+            $rowFrom >= 0
+        and $rowTo <= count($this->matrix)
+        and $columnFrom >= 0
+        and $columnTo <= count($this->matrix[0])
+        and $rowFrom <= $rowTo
+        and $columnFrom <= $columnTo
+        )
+        or throw new InvalidArgumentException('Invalid range');
+
+        $result = [];
+        for ($i = $rowFrom; $i <= $rowTo; $i++) {
+            $result[] = array_slice($this->matrix[$i], $columnFrom, $columnTo - $columnFrom + 1);
+        }
+        return $result;
+    }
+
+    /**
+     * Group by a column
+     * 
+     * @param int $column
+     * @param bool $firstRowAsHeaders
+     * 
+     * @return array
+     */
+    public function groupBy(array $columns, \Closure $aggregate = null, bool $firstRowAsHeaders = false): array
     {
         $data = $this->matrix;
-        
+
         $result = [];
-        if ($firstRowAreHeaders) {
+        if ($firstRowAsHeaders) {
             $headers = array_shift($data);
         }
 
         foreach ($data as $row) {
-            $result[$row[$column]][] = $row;
+            $key = [];
+            foreach ($columns as $column) {
+                $key[] = $row[$column];
+            }
+
+            $key = implode('-', $key);
+            $result[$key][] = $row;
+        }
+
+        if ($aggregate) {
+            foreach ($result as $key => $group) {
+                $aggregation = $aggregate($key, $group);
+                if ($aggregation !== null) {
+                    $result[$key] = $aggregation;
+                }
+            }
         }
 
         return $result;
     }
+
+    public function getTotalRows()
+    {
+        return count($this->matrix);
+    }
+
+    public function getTotalColumns()
+    {
+        return count($this->matrix[0]);
+    }
+
+    public function __toString()
+    {
+        return $this->format(self::FORMAT_TXT);
+    }
+
+    public function getRow(int $row): array
+    {
+        return $this->matrix[$row];
+    }
+
+    public function getColumn(int $column): array
+    {
+        $result = [];
+        foreach ($this->matrix as $row) {
+            $result[] = $row[$column];
+        }
+        return $result;
+    }
+
+    public function getRowWithFormulas(int $row): array
+    {
+        return $this->matrix_original[$row];
+    }
+
+    public function getColumnWithFormulas(int $column): array
+    {
+        $result = [];
+        foreach ($this->matrix_original as $row) {
+            $result[] = $row[$column];
+        }
+        return $result;
+    }
+
 }
