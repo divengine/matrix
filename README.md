@@ -1,20 +1,18 @@
-# Div PHP Matrix 1.1
+# Div PHP Matrix 1.2
 
-This class provides functionality for defining and manipulating matrices, offering various output formats. It accepts a bidimensional array to initialize the matrix with cell values.
+This dynamic matrix manipulation class in PHP goes beyond conventional operations, offering dynamic calculations and diverse output formats for versatile applications.
 
-Key features include:
+It introduces a layer of dynamic logic where cells execute functions, allowing for flexible backend logic. The true power lies in crafting robust backend logic, akin to spreadsheet functionalities tailored for web development. Automatic recalculation is notable, but its strength lies in facilitating complex business logic.
 
-Matrix Operations:
-- Add or remove rows and columns.
-- Set values for specific matrix positions.
-- Populate matrix values dynamically using custom functions.
+Consider it as a tool for architecting backend logic using a spreadsheet-like paradigm. Dynamic calculations create interconnected matrices, triggering logical events across cells and matrices seamlessly.
 
-Dynamic Recalculation:
-- Matrix cells support dynamic calculations based on other cells, allowing changes to automatically trigger recalculation of dependent cells—akin to Excel's behavior.
+The library empowers developers to create responsive systems, adapting to user interactions. Exporting data in various formats, including XML and JSON, extends its utility in web development.
 
-Output Formats:
-- Display matrix values in multiple formats, such as plain text, CSV, XML, JSON, HTML table, Markdown, YAML, and SQL insert statements.
-This package is designed to offer flexibility in matrix manipulation, enabling dynamic calculations and providing diverse output options for ease of integration into various applications.
+A cell's ability to execute dynamic logic is a game-changer, allowing intricate and adaptable behavior defined by a function. Activating or deactivating cells opens possibilities to tailor business logic on-the-fly.
+
+In essence, Div PHP Matrix Library not only facilitates dynamic recalculations but empowers adaptive backend logic. Its fluid response, driven by cell activation and deactivation, showcases potential in crafting dynamic applications.
+
+The library seamlessly integrates with other divengine/* projects (div, ways, nodes, ajaxmap & orm), forming a comprehensive and non-obtrusive toolkit for PHP developers, enhancing dynamic backend capabilities.
 
 ## Requirements
 

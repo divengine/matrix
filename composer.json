@@ -3,11 +3,12 @@
     "license": "GPL-3.0-or-later",
     "description": "Div PHP Matrix",
     "keywords": [
+      "backend logic",
       "matrix manipulation",
       "spreadsheets features"
     ],
-    "homepage": "https://divengine.org",
-    "version": "1.1.0",
+    "homepage": "https://divengine.org/docs/div-php-matrix",
+    "version": "1.2.0",
     "authors": [
       {
         "name": "Rafa Rodriguez",
