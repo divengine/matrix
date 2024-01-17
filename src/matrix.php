@@ -50,8 +50,8 @@ class matrix
     public const FORMAT_YAML = "YAML";
     public const FORMAT_TXT = "TXT";
     public const FORMAT_SQL = "SQL";
-
-    public static $worksheet = [];
+    private $defaultFormat = self::FORMAT_TXT;
+    public static $workbook = [];
 
     /**
      * Constructor
@@ -73,7 +73,7 @@ class matrix
         $this->matrix = $matrix;
         $this->matrix_original = $matrix;
 
-        self::$worksheet[] = $this;
+        self::$workbook[] = $this;
         self::evaluateAll();
     }
 
@@ -668,13 +668,18 @@ class matrix
         }
     }
 
+    /**
+     * Process all matrixes
+     * 
+     * @return void
+     */
     public static function evaluateAll(): void
     {
         if (self::$disableEvallAll) {
             return;
         }
 
-        foreach (self::$worksheet as $worksheet) {
+        foreach (self::$workbook as $worksheet) {
             $worksheet->evaluate();
         }
     }
@@ -801,18 +806,27 @@ class matrix
     public function getTotalColumns()
     {
         return count($this->matrix[0]);
-    }
+    }   
 
-    public function __toString()
-    {
-        return $this->format(self::FORMAT_TXT);
-    }
-
+    /**
+     * Get a row
+     * 
+     * @param int $row
+     * 
+     * @return array
+     */
     public function getRow(int $row): array
     {
         return $this->matrix[$row];
     }
 
+    /**
+     * Get a column
+     * 
+     * @param int $column
+     * 
+     * @return array
+     */
     public function getColumn(int $column): array
     {
         $result = [];
@@ -822,11 +836,25 @@ class matrix
         return $result;
     }
 
+    /**
+     * Get a row with formulas
+     * 
+     * @param int $row
+     * 
+     * @return array
+     */
     public function getRowWithFormulas(int $row): array
     {
         return $this->matrix_original[$row];
     }
 
+    /**
+     * Get a column with formulas
+     * 
+     * @param int $column
+     * 
+     * @return array
+     */
     public function getColumnWithFormulas(int $column): array
     {
         $result = [];
@@ -836,4 +864,63 @@ class matrix
         return $result;
     }
 
+    /**
+     * Validate a format
+     * 
+     * @param string $format
+     * 
+     * @throws InvalidArgumentException
+     * 
+     * @return void
+     */
+    private function validateFormat(string $format): void
+    {
+        if (!in_array($format, [
+            self::FORMAT_CSV,
+            self::FORMAT_XML,
+            self::FORMAT_JSON,
+            self::FORMAT_JSON_OBJECTS,
+            self::FORMAT_SERIALIZE,
+            self::FORMAT_HTML,
+            self::FORMAT_MARKDOWN,
+            self::FORMAT_YAML,
+            self::FORMAT_TXT,
+            self::FORMAT_SQL,
+        ])) {
+            throw new InvalidArgumentException('Invalid format');
+        }
+    }
+
+    /**
+     * Get the default format
+     * 
+     * @return string
+     */
+    public function getDefaultFormat()
+    {
+        return $this->defaultFormat;
+    }
+
+    /**
+     * Set the default format
+     * 
+     * @param string $format
+     * 
+     * @return void
+     */
+    public function setDefaultFormat(string $format)
+    {
+        $this->validateFormat($format);
+        $this->defaultFormat = $format;
+    }
+
+    /**
+     * Magic method to convert the matrix to string
+     * 
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->format($this->defaultFormat);
+    }
 }
