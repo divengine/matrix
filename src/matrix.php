@@ -787,7 +787,7 @@ class matrix
     {
         $this->validateCoordinates($row, $column);
 
-        if ($this->matrix_original[$row][$column] instanceof \Closure) {
+        if ($this->matrix_original[$row][$column] instanceof Closure) {
             if (!isset($this->evaluatedCells[$row][$column])) {
                 $this->matrix[$row][$column] = $this->matrix_original[$row][$column]($row, $column, $this);
                 $this->evaluatedCells[$row][$column] = true;
@@ -873,7 +873,7 @@ class matrix
 
         foreach ($this->matrix_original as $rowIndex => $row) {
             foreach ($row as $colIndex => $col) {
-                if ($col instanceof \Closure) {
+                if ($col instanceof Closure) {
                     try {
                         $this->eval($rowIndex, $colIndex);
                     } catch (\Exception $e) {
@@ -979,12 +979,12 @@ class matrix
      * Group by a column
      * 
      * @param array<string> $columns
-     * @param \Closure $aggregate
+     * @param Closure $aggregate
      * @param bool $firstRowAsHeaders
      * 
      * @return array<array<array<mixed>>>
      */
-    public function groupBy(array $columns, \Closure $aggregate = null, bool $firstRowAsHeaders = false): array
+    public function groupBy(array $columns, Closure $aggregate = null, bool $firstRowAsHeaders = false): array
     {
         $data = $this->matrix;
 
