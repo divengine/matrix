@@ -24,22 +24,30 @@ namespace divengine;
  *
  * @package divengine/matrix
  * @author  Rafa Rodriguez @rafageist [https://rafageist.com]
- * @version 1.1.0
+ * @version 1.2.0
  *
  * @link    https://divengine.org/docs/div-php-matrix
  * @link    https://github.com/divengine/matrix
  */
 
+use Closure;
 use SimpleXMLElement;
 use InvalidArgumentException;
 
 class matrix
 {
-    public static $version = '1.1.0';
-    private $matrix;
-    private $matrix_original;
-    private $evaluatedCells = [];
-    private static $disableEvallAll = false;
+    public static string $version = '1.2.0';
+
+    /** @var array<array<mixed>> $matrix */
+    private array $matrix = [];
+
+    /** @var array<array<mixed>> $matrix_original */
+    private array $matrix_original = [];
+
+    /** @var array<array<bool>> $evaluatedCells */
+    private array $evaluatedCells = [];
+
+    private static bool $disableEvallAll = false;
     public const FORMAT_CSV = "CSV";
     public const FORMAT_XML = "XML";
     public const FORMAT_JSON = "JSON";
@@ -50,37 +58,189 @@ class matrix
     public const FORMAT_YAML = "YAML";
     public const FORMAT_TXT = "TXT";
     public const FORMAT_SQL = "SQL";
-    private $defaultFormat = self::FORMAT_TXT;
-    public static $workbook = [];
+    private string $defaultFormat = self::FORMAT_TXT;
+
+    /** @var array<matrix> $workbook */
+    public static array $workbook = [];
 
     /**
      * Constructor
      * 
-     * @param array $matrix
+     * @param array<array<mixed>|object> $matrixData
      * 
      * @throws InvalidArgumentException
      */
-    public function __construct(array $matrix)
+    public function __construct(array $matrixData)
     {
         // convert object rows to array
-        foreach ($matrix as $rowIndex => $row) {
+        /** @var array<array<mixed>> $data */
+        $data = [];
+        foreach ($matrixData as $rowIndex => $row) {
             if (is_object($row)) {
-                $matrix[$rowIndex] = (array) $row;
+                $data[$rowIndex] = (array) $row;
+            } else {
+                $data[$rowIndex] = $row;
             }
         }
 
-        $this->validateMatrix($matrix);
-        $this->matrix = $matrix;
-        $this->matrix_original = $matrix;
+        $this->validateMatrix($data);
+        $this->matrix = $data;
+        $this->matrix_original = $data;
 
         self::$workbook[] = $this;
         self::evaluateAll();
     }
 
     /**
+     * Create a matrix
+     * 
+     * @param array<array<mixed>|object> $matrix
+     * 
+     * @return matrix
+     */
+    public static function create(array $matrix)
+    {
+        return new self($matrix);
+    }
+
+    /**
+     * Create a array from dimensions
+     * 
+     * @param int $rows
+     * @param int $cols
+     * @param mixed $value
+     * 
+     * @return array<array<mixed>>
+     */
+    public static function createArrayFromDims(int $rows, int $cols, $value = null)
+    {
+        $matrix = [];
+        for ($i = 0; $i < $rows; $i++) {
+            $matrix[] = array_fill(0, $cols, $value);
+        }
+        return $matrix;
+    }
+
+    /**
+     * Create a matrix from dimensions
+     * 
+     * @param int $rows
+     * @param int $cols
+     * @param mixed $value
+     * 
+     * @return matrix
+     */
+    public static function dimension(int $rows, int $cols, $value = null)
+    {
+        return new self(self::createArrayFromDims($rows, $cols, $value));
+    }
+
+    /**
+     * Create a matrix from a CSV file
+     * 
+     * @param string $filename
+     * @param string $delimiter
+     * @param string $enclosure
+     * @param string $escape
+     * 
+     * @return matrix
+     */
+    public static function fromCSVFile(string $filename, string $delimiter = ',', string $enclosure = '"', string $escape = '\\'): matrix
+    {
+        $matrix = [];
+        if (($handle = fopen($filename, "r")) !== false) {
+            while (($data = fgetcsv($handle, 0, $delimiter, $enclosure, $escape)) !== false) {
+                $matrix[] = $data;
+            }
+            fclose($handle);
+        }
+        return new self($matrix);
+    }
+
+    /**
+     * Create a matrix from a JSON file
+     * 
+     * @param string $filename
+     * 
+     * @throws InvalidArgumentException
+     * 
+     * @return matrix
+     */
+    public static function fromJSONFile(string $filename): matrix
+    {
+        $json = file_get_contents($filename);
+        if ($json) {
+            $matrix = json_decode($json, true);
+
+            /** @var array<array<mixed>|object> $matrix */
+            return new self($matrix);
+        }
+
+        throw new InvalidArgumentException('Invalid JSON file');
+    }
+
+    /**
+     * Create a matrix from a TXT file
+     * 
+     * @param string $filename
+     * @param string $delimiter
+     * 
+     * @return matrix
+     */
+    public static function fromTXTFile(string $filename, string $delimiter = "\t"): matrix
+    {
+        $matrix = [];
+        if (($handle = fopen($filename, "r")) !== false) {
+            while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
+                $matrix[] = $data;
+            }
+            fclose($handle);
+        }
+        return new self($matrix);
+    }
+
+    /**
+     * Create a matrix from a serialized file
+     * 
+     * @param string $filename
+     * 
+     * @throws InvalidArgumentException
+     * 
+     * @return matrix
+     */
+    public static function fromSerializedFile(string $filename): matrix
+    {
+        $serialized = file_get_contents($filename);
+        if ($serialized) {
+            $matrix = unserialize($serialized);
+
+            /** @var array<array<mixed>|object> $matrix */
+            return new self($matrix);
+        }
+
+        throw new InvalidArgumentException('Invalid serialized file');
+    }
+
+    /**
+     * Create a matrix from a serialized string
+     * 
+     * @param string $string
+     * 
+     * @return matrix
+     */
+
+    public static function fromSerializedString(string $string): matrix
+    {
+        $matrix = unserialize($string);
+
+        /** @var array<array<mixed>|object> $matrix */
+        return new self($matrix);
+    }
+
+    /**
      * Validates the matrix
      * 
-     * @param array $matrix
+     * @param array<array<mixed>> $matrix
      * 
      * @throws InvalidArgumentException
      * 
@@ -99,9 +259,12 @@ class matrix
     /**
      * Add a row
      * 
-     * @param array $row
+     * @param array<mixed> $row
+     * @param bool $onTop
      * 
-     * @return int
+     * @throws InvalidArgumentException
+     * 
+     * @return void
      */
     public function addRow(array $row, bool $onTop = false): void
     {
@@ -167,7 +330,7 @@ class matrix
     /**
      * Get data
      * 
-     * @return array
+     * @return array<array<mixed>>
      */
     public function getMatrix(): array
     {
@@ -177,7 +340,7 @@ class matrix
     /**
      * Validate a row
      * 
-     * @param array $row
+     * @param array<mixed> $row
      * 
      * @throws InvalidArgumentException
      * 
@@ -249,33 +412,33 @@ class matrix
      * 
      * @return string     
      */
-    public function formatXML(string $rootTag = 'root', bool $firstRowAsHeaders = false)
+    public function formatXML(string $rootTag = 'root', bool $firstRowAsHeaders = false): string
     {
         $xml = new SimpleXMLElement("<{$rootTag}/>");
 
         if ($firstRowAsHeaders) {
             $fields = $xml->addChild('fields');
             foreach ($this->matrix[0] as $field) {
-                $fields->addChild('field', $field);
+                $fields->addChild('field', $field."");
             }
 
             $data = $xml->addChild('data');
             foreach (array_slice($this->matrix, 1) as $row) {
                 $item = $data->addChild('row');
                 foreach ($this->matrix[0] as $index => $field) {
-                    $item->addChild($field, $row[$index]);
+                    $item->addChild($field."", $row[$index]."");
                 }
             }
         } else {
             foreach ($this->matrix as $row) {
                 $item = $xml->addChild('row');
                 foreach ($row as $index => $field) {
-                    $item->addChild('field', $field);
+                    $item->addChild('field', $field."");
                 }
             }
         }
 
-        return $xml->asXML();
+        return $xml->asXML() . "";
     }
 
     /**
@@ -285,7 +448,7 @@ class matrix
      * @param bool $asObjects
      * @return string
      */
-    public function formatJSON(bool $asObjects = false)
+    public function formatJSON(bool $asObjects = false): string
     {
         if ($asObjects) {
             $result = [];
@@ -293,15 +456,15 @@ class matrix
 
                 // convert header names to lower snake case
                 $header = array_map(function ($field) {
-                    return str_replace(' ', '_', strtolower($field));
+                    return str_replace(' ', '_', strtolower($field.""));
                 }, $this->matrix[0]);
 
                 // combine header names with row values
                 $result[] = array_combine($header, $row);
             }
-            return json_encode($result);
+            return json_encode($result) . "";
         }
-        return json_encode($this->matrix);
+        return json_encode($this->matrix) . "";
     }
 
     /**
@@ -310,9 +473,9 @@ class matrix
      * 
      * @return string
      */
-    public function formatSerialize()
+    public function formatSerialize(): string
     {
-        return serialize($this->matrix);
+        return serialize($this->matrix) . "";
     }
 
     /**
@@ -395,13 +558,22 @@ class matrix
         $array = $this->matrix;
         $yaml = '';
 
+        $headers = [];
+
+        // by default headers are a list of consecutive numbers
+        for ($i = 0; $i < count($array[0]); $i++) {
+            $headers[] = $i;
+        }
+
         if ($firstRowAsHeaders) {
             // Process the first row (column names)
             $headers = array_shift($array);
             $yaml .= 'fields:' . PHP_EOL;
-            foreach ($headers as $header) {
-                $formattedHeader = str_replace(' ', '_', strtolower($header));
-                $yaml .= "  - $formattedHeader" . PHP_EOL;
+            if (is_array($headers)) {
+                foreach ($headers as $header) {
+                    $formattedHeader = str_replace(' ', '_', strtolower($header.""));
+                    $yaml .= "  - $formattedHeader" . PHP_EOL;
+                }
             }
         }
 
@@ -411,9 +583,12 @@ class matrix
             $yaml .= '  - ';
 
             $firstKey = true;
+            $i = 0;
             foreach ($item as $key => $value) {
+                $i++;
                 // Convert the key to lowercase and replace spaces with underscores
-                $formattedKey = str_replace(' ', '_', strtolower($headers[$key]));
+                $unformattedKey = $headers[$key] ?? "$i";
+                $formattedKey = str_replace(' ', '_', strtolower($unformattedKey.""));
 
                 // Add the first field on the same line with the dash, the rest aligned
                 if (!$firstKey) {
@@ -421,7 +596,7 @@ class matrix
                 }
 
                 // Key and value for each pair
-                $yaml .= "$formattedKey: $value" . PHP_EOL;
+                $yaml .= $formattedKey.": ".$value . PHP_EOL;
 
                 $firstKey = false;
             }
@@ -470,7 +645,7 @@ class matrix
 
             // headers as snake case
             $headers = array_map(function ($field) {
-                return str_replace(' ', '_', strtolower($field));
+                return str_replace(' ', '_', strtolower($field.""));
             }, $this->matrix[0]);
 
             $sql = 'INSERT INTO ' . $tableName . ' (' . implode(', ', $headers) . ') VALUES' . PHP_EOL;
@@ -489,7 +664,7 @@ class matrix
                     } elseif (is_object($value)) {
                         $row[$index] = json_encode($value);
                     } else {
-                        $row[$index] = "$value";
+                        $row[$index] = $value."";
                     }
                 }
 
@@ -534,12 +709,14 @@ class matrix
      * 
      * @param int $column
      * @param int $from
+     * @param int $to
+     * @param mixed $value
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function fillVertical(int $column, int $from, int $to, $value): void
+    public function fillVertical(int $column, int $from, int $to, mixed $value): void
     {
         if ($from < 0 || $to > count($this->matrix)) {
             throw new InvalidArgumentException('Invalid range');
@@ -548,6 +725,48 @@ class matrix
         self::$disableEvallAll = true;
         for ($i = $from; $i <= $to; $i++) {
             $this->set($i, $column, $value);
+        }
+        self::$disableEvallAll = false;
+
+        self::evaluateAll();
+    }
+
+    /**
+     * Fill a range
+     * 
+     * @param int $rowFrom
+     * @param int $columnFrom
+     * @param int $rowTo
+     * @param int $columnTo
+     * 
+     * @throws InvalidArgumentException
+     * 
+     * @return void
+     */
+    public function fillRange(int $rowFrom, int $columnFrom, int $rowTo, int $columnTo, mixed $value): void
+    {
+        $totalRows = count($this->matrix);
+
+        if ($totalRows == 0) {
+            return;
+        }
+
+        $totalColumns = count($this->matrix[0]);
+
+        (
+            $rowFrom >= 0
+            and $rowTo < $totalRows
+            and $columnFrom >= 0
+            and $columnTo < $totalColumns
+            and $rowFrom <= $rowTo
+            and $columnFrom <= $columnTo
+        ) or throw new InvalidArgumentException('Invalid range');
+
+        self::$disableEvallAll = true;
+        for ($i = $rowFrom; $i <= $rowTo; $i++) {
+            for ($j = $columnFrom; $j <= $columnTo; $j++) {
+                $this->set($i, $j, $value);
+            }
         }
         self::$disableEvallAll = false;
 
@@ -603,12 +822,13 @@ class matrix
      * 
      * @param int $row
      * @param int $column
+     * @param mixed $value
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function set(int $row, int $column, $value): void
+    public function set(int $row, int $column, mixed $value): void
     {
         $this->validateCoordinates($row, $column);
 
@@ -689,7 +909,7 @@ class matrix
      * 
      * @throws InvalidArgumentException
      * 
-     * @return array
+     * @return array<mixed>
      */
     public function horizontal(int $row, int $from, int $to): array
     {
@@ -709,7 +929,7 @@ class matrix
      * 
      * @throws InvalidArgumentException
      * 
-     * @return array
+     * @return array<mixed>
      */
     public function vertical(int $column, int $from, int $to): array
     {
@@ -734,19 +954,19 @@ class matrix
      * 
      * @throws InvalidArgumentException
      * 
-     * @return array
+     * @return array<array<mixed>>
      */
     public function range(int $rowFrom, int $columnFrom, int $rowTo, int $columnTo): array
     {
         (
             $rowFrom >= 0
-        and $rowTo <= count($this->matrix)
-        and $columnFrom >= 0
-        and $columnTo <= count($this->matrix[0])
-        and $rowFrom <= $rowTo
-        and $columnFrom <= $columnTo
+            and $rowTo <= count($this->matrix)
+            and $columnFrom >= 0
+            and $columnTo <= count($this->matrix[0])
+            and $rowFrom <= $rowTo
+            and $columnFrom <= $columnTo
         )
-        or throw new InvalidArgumentException('Invalid range');
+            or throw new InvalidArgumentException('Invalid range');
 
         $result = [];
         for ($i = $rowFrom; $i <= $rowTo; $i++) {
@@ -758,10 +978,11 @@ class matrix
     /**
      * Group by a column
      * 
-     * @param int $column
+     * @param array<string> $columns
+     * @param \Closure $aggregate
      * @param bool $firstRowAsHeaders
      * 
-     * @return array
+     * @return array<array<array<mixed>>>
      */
     public function groupBy(array $columns, \Closure $aggregate = null, bool $firstRowAsHeaders = false): array
     {
@@ -769,7 +990,7 @@ class matrix
 
         $result = [];
         if ($firstRowAsHeaders) {
-            $headers = array_shift($data);
+            array_shift($data);
         }
 
         foreach ($data as $row) {
@@ -794,22 +1015,32 @@ class matrix
         return $result;
     }
 
-    public function getTotalRows()
+    /**
+     * Get the total rows
+     * 
+     * @return int
+     */
+    public function getTotalRows(): int
     {
         return count($this->matrix);
     }
 
-    public function getTotalColumns()
+    /**
+     * Get the total columns
+     * 
+     * @return int
+     */
+    public function getTotalColumns(): int
     {
         return count($this->matrix[0]);
-    }   
+    }
 
     /**
      * Get a row
      * 
      * @param int $row
      * 
-     * @return array
+     * @return array<mixed>
      */
     public function getRow(int $row): array
     {
@@ -821,7 +1052,7 @@ class matrix
      * 
      * @param int $column
      * 
-     * @return array
+     * @return array<mixed>
      */
     public function getColumn(int $column): array
     {
@@ -837,7 +1068,7 @@ class matrix
      * 
      * @param int $row
      * 
-     * @return array
+     * @return array<mixed>
      */
     public function getRowWithFormulas(int $row): array
     {
@@ -849,7 +1080,7 @@ class matrix
      * 
      * @param int $column
      * 
-     * @return array
+     * @return array<mixed>
      */
     public function getColumnWithFormulas(int $column): array
     {
@@ -918,5 +1149,219 @@ class matrix
     public function __toString()
     {
         return $this->format($this->defaultFormat);
+    }
+
+    /**
+     * Magic method to get a property
+     * 
+     * @param string $name
+     * 
+     * @return mixed
+     */
+    public function __get($name): mixed
+    {
+        if ($name == "rows") {
+            return $this->getTotalRows();
+        }
+
+        if ($name == "columns") {
+            return $this->getTotalColumns();
+        }
+
+        if (is_numeric($name)) {
+            $pos = $name * 1;
+            $name = explode(".", $name);
+            $row = intval($name[0]);
+            $column = intval($name[1] ?? 0);
+
+            if ($pos < 0) {
+                $row = $this->getTotalRows() + $row;
+            }
+
+            return $this->get($row, $column);
+        }
+
+        if (property_exists($this, $name)) {
+            return $this->$name;
+        }
+
+        throw new InvalidArgumentException('Invalid property');
+    }
+
+    /**
+     * Magic method to set a property
+     * 
+     * @param string $name
+     * @param mixed $value
+     * 
+     * @return void
+     */
+    public function __set($name, $value): void
+    {
+        if (is_numeric($name)) {
+            $pos = $name * 1;
+            $name = explode(".", $name);
+            $row = intval($name[0]);
+            $column = intval($name[1] ?? 0);
+
+            if ($pos < 0) {
+                $row = $this->getTotalRows() + $row;
+            }
+
+            $this->set($row, $column, $value);
+            return;
+        }
+
+        if (property_exists($this, $name)) {
+            $this->$name = $value;
+            return;
+        }
+
+        throw new InvalidArgumentException('Invalid property');
+    }
+
+    /**
+     * Insert a row before a row
+     * 
+     * @param int $row
+     * @param array<mixed> $data
+     * 
+     * @throws InvalidArgumentException
+     * 
+     * @return void
+     */
+    public function insertBeforeRow(int $row, array $data): void
+    {
+        if (!$this->validateRow($data)) {
+            throw new InvalidArgumentException('Row does not have the same number of elements as the first row');
+        }
+
+        array_splice($this->matrix, $row, 0, [$data]);
+        array_splice($this->matrix_original, $row, 0, [$data]);
+
+        self::evaluateAll();
+    }
+
+    /**
+     * Insert a row after a row
+     * 
+     * @param int $row
+     * @param array<mixed> $data
+     * 
+     * @throws InvalidArgumentException
+     * 
+     * @return void
+     */
+    public function insertAfterRow(int $row, array $data): void
+    {
+        if (!$this->validateRow($data)) {
+            throw new InvalidArgumentException('Row does not have the same number of elements as the first row');
+        }
+
+        array_splice($this->matrix, $row + 1, 0, [$data]);
+        array_splice($this->matrix_original, $row + 1, 0, [$data]);
+
+        self::evaluateAll();
+    }
+
+    /**
+     * Insert a column before a column
+     * 
+     * @param int $column
+     * @param mixed $value
+     * 
+     * @return void
+     */
+    public function insertBeforeColumn(int $column, mixed $value = null): void
+    {
+        if (!is_array($value)) {
+            $value = array_fill(0, count($this->matrix), $value);
+            $value = (array) $value;
+        }
+        
+        $i = 0;
+        foreach ($this->matrix as $rowIndex => $row) {
+            array_splice($this->matrix[$rowIndex], $column, 0,  [$value[$i]]);
+            array_splice($this->matrix_original[$rowIndex], $column, 0,  [$value[$i]]);
+            $i++;
+        }
+
+        self::evaluateAll();
+    }
+
+    /**
+     * Insert a column after a column
+     * 
+     * @param int $column
+     * @param mixed $value
+     * 
+     * @return void
+     */
+    public function insertAfterColumn(int $column, $value = null): void
+    {
+        if (!is_array($value)) {
+            $value = array_fill(0, count($this->matrix), $value);
+            $value = (array) $value;
+        }
+
+        $i = 0;
+        foreach ($this->matrix as $rowIndex => $row) {
+            array_splice($this->matrix[$rowIndex], $column + 1, 0, [$value[$i]]);
+            array_splice($this->matrix_original[$rowIndex], $column + 1, 0, [$value[$i]]);
+            $i++;
+        }
+
+        self::evaluateAll();
+    }
+
+    /**
+     * Remove a column
+     * 
+     * @param int $column
+     * 
+     * @return void
+     */
+    public function removeColumn(int $column): void
+    {
+        foreach ($this->matrix as $rowIndex => $row) {
+            array_splice($this->matrix[$rowIndex], $column, 1);
+            array_splice($this->matrix_original[$rowIndex], $column, 1);
+        }
+
+        self::evaluateAll();
+    }
+
+    /**
+     * Remove a column
+     * 
+     * @param int $from
+     * @param int $to
+     * 
+     * @return void
+     */
+    public function removeColumnRange(int $from, int $to): void
+    {
+        foreach ($this->matrix as $rowIndex => $row) {
+            array_splice($this->matrix[$rowIndex], $from, $to - $from + 1);
+            array_splice($this->matrix_original[$rowIndex], $from, $to - $from + 1);
+        }
+
+        self::evaluateAll();
+    }
+
+    /**
+     * Remove a row
+     * 
+     * @param int $from
+     * @param int $to
+     * 
+     * @return void
+     */
+    public function removeRowRange(int $from, int $to): void
+    {
+        array_splice($this->matrix, $from, $to - $from + 1);
+        array_splice($this->matrix_original, $from, $to - $from + 1);
+
+        self::evaluateAll();
     }
 }

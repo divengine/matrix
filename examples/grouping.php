@@ -19,7 +19,7 @@ $table = new matrix([
 ]);
 
 // Show the matrix
-echo $table->formatTXT(true);
+echo $table;
 
 // Group by
 $result = $table->groupBy([0], function($key, $group){
@@ -33,5 +33,5 @@ $result = $table->groupBy([0], function($key, $group){
 echo "\n";
 $groupBy = new matrix(array_values($result));
 $groupBy->addRow(["Product", "Total"], onTop: true);
-echo $groupBy->formatTXT(true);
+echo $groupBy;
 
