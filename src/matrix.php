@@ -1514,7 +1514,7 @@ class matrix
     {
         // IMPORTANT: dont use isset because it returns false for null values
         // and dont use existsColumn and existsRow because they are not as fast as this
-        // and maybe the cell exists and the row or column does not exist
+        // and maybe the cell exists and the row or column does not
 
         if ($this->existsRow($row))
         {
