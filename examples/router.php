@@ -33,18 +33,31 @@ $F_PASS = fn ($r, $c, $m) => ($context->{1.1} || $m->{$r + .2}) && $m->{$r + .3}
 $F_HANDLER = fn ($r, $c, $m) => $m->{$r + .4} ? $m->{$r + .1} : 'login';
 $F_HANDLER_PATH = fn ($r, $c, $m) => __DIR__ . "/handlers/{$m->{$r + .5}}.php";
 $F_LISTENER = fn ($r, $c, matrix $m) => $m->{$r + .3} ? (require($m->{$r + .6}))() : null;
-$F_NOTHING_MATCH = fn ($r, $c, matrix $m) => array_reduce($m->vertical($c, 1, $r - 3), fn ($c, $i) => !$c && !$i, false);
+$F_NOTHING_MATCH = fn($r, $c, matrix $m) => array_reduce($m->vertical($c, 1, $r - 2), fn ($x, $i) => $x && !$i, true);
 
-$routes = new matrix([
-    ["Route",  "Controller", "Public",          "Match", "Pass",   "Handler",  "Handler Path",  "Listener"],
+$routes = [
+    ["Route",  "Controller", "Public",          "Match", "Pass",   "Handler",  "Handler Path",  "Listener", 'caption' => ""],
+    // -------------------------------------------------------------------------------------------------------------------------
+    ["/",      "home",        true,            $F_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER, 'caption' => "Home"],
+    ["/about", "about",       true,            $F_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER, 'caption' => "About"],
+    ["/login", "login",       true,            $F_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER, 'caption' => "Login"],
+    ["/admin", "admin",       false,           $F_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER, 'caption' => "Admin"],
     // -----------------------------------------------------------------------------------------------------
-    ["/",      "home",        true,            $F_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER],
-    ["/about", "about",       true,            $F_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER],
-    ["/login", "login",       true,            $F_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER],
-    ["/admin", "admin",       false,           $F_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER],
-    // -----------------------------------------------------------------------------------------------------
-    ["*",      "log",         true,            $F_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER],
-    ["*",      "404",         true,    $F_NOTHING_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER]
-]);
+    ["*",      "log",         true,            $F_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER, 'caption' => ""],
+    ["*",      "404",         true,    $F_NOTHING_MATCH, $F_PASS, $F_HANDLER, $F_HANDLER_PATH, $F_LISTENER, 'caption' => ""]
+];
 
-echo "<script>console.log(" . $routes->formatJSON(true) . ");</script>";
+// print menu
+echo "<p>". array_reduce($routes, function ($x, $route) {
+    $caption = $route['caption'] ?? '';
+    $path = $route[0];
+    
+    if ($caption == "")
+        return $x;
+
+    return $x . "<a href='$path'>$caption</a> | ";
+}, "") . "</p>";
+
+$router = new matrix($routes);
+
+echo "<script>console.log(" . $router->formatJSON(true) . ");</script>";

@@ -15,10 +15,11 @@ $table = new matrix([
     ["Orange", 6, 10],
 ]);
 
-echo $table . "\n";
-
 $table->addColumn();
+
+echo $table . "\n";
 $table->{0.3} = "Amount";
+echo $table . "\n";
 
 // Fill the column with the product of the previous two columns
 $table->fillVertical(3, 1, 3, $F_AMOUNT);
@@ -51,3 +52,4 @@ echo "\n";
 
 // Serialize
 echo $table->format('serialize');
+

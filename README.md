@@ -1,4 +1,4 @@
-# Div PHP Matrix 1.2
+# Div PHP Matrix 1.3
 
 This dynamic matrix manipulation class in PHP goes beyond conventional operations, offering dynamic calculations and diverse output formats for versatile applications.
 
@@ -26,7 +26,7 @@ composer require divengine/matrix
 
 ## Documentation 
 
-https://divengine.org/docs/div-php-matrix
+https://divengine.org/
 
 ## Examples
 
