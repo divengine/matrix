@@ -10,7 +10,7 @@ The library empowers developers to create responsive systems, adapting to user i
 
 A cell's ability to execute dynamic logic is a game-changer, allowing intricate and adaptable behavior defined by a function. Activating or deactivating cells opens possibilities to tailor business logic on-the-fly.
 
-In essence, Div PHP Matrix Library not only facilitates dynamic recalculations but empowers adaptive backend logic. Its fluid response, driven by cell activation and deactivation, showcases potential in crafting dynamic applications.
+In essence, Div PHP Matrix not only facilitates dynamic recalculations but empowers adaptive backend logic. Its fluid response, driven by cell activation and deactivation, showcases potential in crafting dynamic applications.
 
 The library seamlessly integrates with other divengine/* projects (div, ways, nodes, ajaxmap & orm), forming a comprehensive and non-obtrusive toolkit for PHP developers, enhancing dynamic backend capabilities.
 
