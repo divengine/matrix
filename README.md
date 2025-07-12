@@ -1,5 +1,11 @@
 # Div PHP Matrix 1.3
 
+[![Latest Stable Version](https://poser.pugx.org/divengine/matrix/v)](https://packagist.org/packages/divengine/matrix)
+[![Total Downloads](https://poser.pugx.org/divengine/matrix/downloads)](https://packagist.org/packages/divengine/matrix)
+[![Latest Unstable Version](https://poser.pugx.org/divengine/div/v/unstable)](https://packagist.org/packages/divengine/matrix)
+[![License](https://poser.pugx.org/divengine/matrix/license)](https://packagist.org/packages/divengine/matrix)
+[![PHP Version Require](https://poser.pugx.org/divengine/matrix/require/php)](https://packagist.org/packages/divengine/matrix)
+
 This dynamic matrix manipulation class in PHP goes beyond conventional operations, offering dynamic calculations and diverse output formats for versatile applications.
 
 It introduces a layer of dynamic logic where cells execute functions, allowing for flexible backend logic. The true power lies in crafting robust backend logic, akin to spreadsheet functionalities tailored for web development. Automatic recalculation is notable, but its strength lies in facilitating complex business logic.
