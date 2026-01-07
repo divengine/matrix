@@ -24,7 +24,7 @@ namespace divengine;
  *
  * @package divengine/matrix
  * @author  Rafa Rodriguez @rafageist [https://rafageist.com]
- * @version 1.3.0
+ * @version 1.3.1
  *
  * @link    https://divengine.org/
  * @link    https://github.com/divengine/matrix
@@ -36,7 +36,7 @@ use InvalidArgumentException;
 
 class matrix
 {
-    public static string $version = '1.3.0';
+    public static string $version = '1.3.1';
 
     /** @var array<array<mixed>> $matrix */
     private array $matrix = [];
@@ -47,7 +47,7 @@ class matrix
     /** @var array<array<bool>> $evaluatedCells */
     private array $evaluatedCells = [];
 
-    private static bool $disableEvallAll = false;
+    private static bool $disableEvalAll = false;
     public const FORMAT_CSV = "CSV";
     public const FORMAT_XML = "XML";
     public const FORMAT_JSON = "JSON";
@@ -259,14 +259,14 @@ class matrix
     /**
      * Add a row
      * 
-     * @param array<mixed>|object $row
+     * @param array<bool|float|string|int>|object $row
      * @param bool $onTop
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function addRow(array|object $row, bool $onTop = false, mixed $index = null): void
+    public function addRow(array|object $row, bool $onTop = false, bool|float|string|int $index = null): void
     {
         if (is_object($row)) {
             $row = (array) $row;
@@ -312,11 +312,11 @@ class matrix
     /**
      * Remove a row
      * 
-     * @param int $index
+     * @param bool|float|string|int $index
      * 
      * @return void
      */
-    public function removeRow(mixed $index, bool $reorder = true): void
+    public function removeRow(bool|float|string|int $index, bool $reorder = true): void
     {
         if ($this->existsRow($index)) {
             unset($this->matrix[$index]);
@@ -706,20 +706,20 @@ class matrix
     /**
      * Fill a horizontal range
      * 
-     * @param int $row
-     * @param int $from
+     * @param bool|float|string|int $row
+     * @param bool|float|string|int $from
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function fillHorizontal(mixed $row, mixed $from, mixed $to, mixed $value): void
+    public function fillHorizontal(bool|float|string|int $row, bool|float|string|int $from, bool|float|string|int $to, bool|float|string|int $value): void
     {
         if (!$this->existsCell($row , $from) || !$this->existsCell($row , $to)) {
             throw new InvalidArgumentException('Invalid range');
         }
 
-        self::$disableEvallAll = true;
+        self::$disableEvalAll = true;
 
         foreach ($this->matrix[$row] as $col => $oldValue) {
             if ($col >= $from && $col <= $to) {
@@ -727,7 +727,7 @@ class matrix
             }
         }
 
-        self::$disableEvallAll = false;
+        self::$disableEvalAll = false;
 
         self::evaluateAll();
     }
@@ -735,22 +735,22 @@ class matrix
     /**
      * Fill a vertical range
      * 
-     * @param mixed $column
-     * @param mixed $from
-     * @param mixed $to
+     * @param bool|float|string|int $column
+     * @param bool|float|string|int $from
+     * @param bool|float|string|int $to
      * @param mixed $value
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function fillVertical(mixed $column, mixed $from, mixed $to, mixed $value): void
+    public function fillVertical(bool|float|string|int $column, bool|float|string|int $from, bool|float|string|int $to, mixed $value): void
     {
         if (!$this->existsCell($from, $column) || !$this->existsCell($to, $column)) {
             throw new InvalidArgumentException('Invalid range');
         }
 
-        self::$disableEvallAll = true;
+        self::$disableEvalAll = true;
 
         foreach ($this->matrix as $rowIndex => $row) {
             if ($rowIndex >= $from && $rowIndex <= $to) {
@@ -758,7 +758,7 @@ class matrix
             }
         }
 
-        self::$disableEvallAll = false;
+        self::$disableEvalAll = false;
 
         self::evaluateAll();
     }
@@ -766,16 +766,17 @@ class matrix
     /**
      * Fill a range
      * 
-     * @param mixed $rowFrom
-     * @param mixed $columnFrom
-     * @param mixed $rowTo
-     * @param mixed $columnTo
+     * @param bool|float|string|int $rowFrom
+     * @param bool|float|string|int $columnFrom
+     * @param bool|float|string|int $rowTo
+     * @param bool|float|string|int $columnTo
+     * @param mixed $value
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function fillRange(mixed $rowFrom, mixed $columnFrom, mixed $rowTo, mixed $columnTo, mixed $value): void
+    public function fillRange(bool|float|string|int $rowFrom, bool|float|string|int $columnFrom, bool|float|string|int $rowTo, bool|float|string|int $columnTo, mixed $value): void
     {
         $totalRows = count($this->matrix);
 
@@ -794,7 +795,7 @@ class matrix
             and $columnFrom <= $columnTo
         ) or throw new InvalidArgumentException('Invalid range');
 
-        self::$disableEvallAll = true;
+        self::$disableEvalAll = true;
         foreach ($this->matrix as $rowIndex => $row) {
             if ($rowIndex >= $rowFrom && $rowIndex <= $rowTo) {
                 foreach ($row as $colIndex => $oldValue) {
@@ -805,7 +806,7 @@ class matrix
             }
         }
 
-        self::$disableEvallAll = false;
+        self::$disableEvalAll = false;
 
         self::evaluateAll();
     }
@@ -813,14 +814,14 @@ class matrix
     /**
      * Evaluate a cell
      * 
-     * @param int $row
-     * @param int $column
+     * @param bool|float|string|int $row
+     * @param bool|float|string|int $column
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function eval(mixed $row, mixed $column): void
+    public function eval(bool|float|string|int $row, bool|float|string|int $column): void
     {
         $this->validateCoordinates($row, $column);
 
@@ -835,14 +836,14 @@ class matrix
     /**
      * Validate coordinates
      * 
-     * @param int $row
-     * @param int $column
+     * @param bool|float|string|int $row
+     * @param bool|float|string|int $column
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function validateCoordinates(mixed $row, mixed $column): void
+    public function validateCoordinates(bool|float|string|int $row, bool|float|string|int $column): void
     {
         if (!$this->existsCell($row, $column)) {
             throw new InvalidArgumentException('Invalid cell');
@@ -851,15 +852,15 @@ class matrix
     /**
      * Set a value in a cell
      * 
-     * @param mixed $row
-     * @param mixed $column
+     * @param bool|float|string|int $row
+     * @param bool|float|string|int $column
      * @param mixed $value
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function set(mixed $row, mixed $column, mixed $value): void
+    public function set(bool|float|string|int $row, bool|float|string|int $column, mixed $value): void
     {
         $this->validateCoordinates($row, $column);
 
@@ -872,14 +873,14 @@ class matrix
     /**
      * Get a value from a cell
      * 
-     * @param int $row
-     * @param int $column
+     * @param bool|float|string|int $row
+     * @param bool|float|string|int $column
      * 
      * @throws InvalidArgumentException
      * 
      * @return mixed
      */
-    public function get(mixed $row, mixed $column)
+    public function get(bool|float|string|int $row, bool|float|string|int $column)
     {
         $this->validateCoordinates($row, $column);
 
@@ -895,7 +896,7 @@ class matrix
      */
     public function evaluate(): void
     {
-        if (self::$disableEvallAll) {
+        if (self::$disableEvalAll) {
             return;
         }
 
@@ -922,7 +923,7 @@ class matrix
      */
     public static function evaluateAll(): void
     {
-        if (self::$disableEvallAll) {
+        if (self::$disableEvalAll) {
             return;
         }
 
@@ -934,15 +935,15 @@ class matrix
     /**
      * Get a horizontal range
      * 
-     * @param mixed $row
-     * @param mixed $from
-     * @param mixed $to
+     * @param bool|float|string|int $row
+     * @param bool|float|string|int $from
+     * @param bool|float|string|int $to
      * 
      * @throws InvalidArgumentException
      * 
      * @return array<mixed>
      */
-    public function horizontal(mixed $row, mixed $from = null, mixed $to = null): array
+    public function horizontal(bool|float|string|int $row, bool|float|string|int $from = null, bool|float|string|int $to = null): array
     {
 
         if (!$this->existsRow($row)) {
@@ -970,13 +971,13 @@ class matrix
     /**
      * Get a vertical range
      * 
-     * @param mixed $column
-     * @param mixed $from
-     * @param mixed $to
+     * @param bool|float|string|int $column
+     * @param bool|float|string|int $from
+     * @param bool|float|string|int $to
      * 
      * @return array<mixed>
      */
-    public function vertical(mixed $column, mixed $from = null, mixed $to = null): array
+    public function vertical(bool|float|string|int $column, bool|float|string|int $from = null, bool|float|string|int $to = null): array
     {
         $result = [];
 
@@ -1000,16 +1001,16 @@ class matrix
     /**
      * Get a range
      * 
-     * @param mixed $rowFrom
-     * @param mixed $columnFrom
-     * @param mixed $rowTo
-     * @param mixed $columnTo
+     * @param bool|float|string|int $rowFrom
+     * @param bool|float|string|int $columnFrom
+     * @param bool|float|string|int $rowTo
+     * @param bool|float|string|int $columnTo
      * 
      * @throws InvalidArgumentException
      * 
      * @return array<array<mixed>>
      */
-    public function range(mixed $rowFrom, mixed $columnFrom, mixed $rowTo, mixed $columnTo, bool $sameIndexes = true): array
+    public function range(bool|float|string|int $rowFrom, bool|float|string|int $columnFrom, bool|float|string|int $rowTo, bool|float|string|int $columnTo, bool $sameIndexes = true): array
     {
         $result = [];
         foreach ($this->matrix as $rowIndex => $row) {
@@ -1101,11 +1102,11 @@ class matrix
     /**
      * Get a row
      * 
-     * @param int $row
+     * @param bool|float|string|int $row
      * 
      * @return array<mixed>
      */
-    public function getRow(int $row): array
+    public function getRow(bool|float|string|int $row): array
     {
         return $this->matrix[$row];
     }
@@ -1113,11 +1114,11 @@ class matrix
     /**
      * Get a column
      * 
-     * @param int $column
+     * @param bool|float|string|int $column
      * 
      * @return array<mixed>
      */
-    public function getColumn(int $column): array
+    public function getColumn(bool|float|string|int $column): array
     {
         $result = [];
         foreach ($this->matrix as $row) {
@@ -1129,11 +1130,11 @@ class matrix
     /**
      * Get a row with formulas
      * 
-     * @param int $row
+     * @param bool|float|string|int $row
      * 
      * @return array<mixed>
      */
-    public function getRowWithFormulas(int $row): array
+    public function getRowWithFormulas(bool|float|string|int $row): array
     {
         return $this->matrix_original[$row];
     }
@@ -1141,11 +1142,11 @@ class matrix
     /**
      * Get a column with formulas
      * 
-     * @param int $column
+     * @param bool|float|string|int $column
      * 
      * @return array<mixed>
      */
-    public function getColumnWithFormulas(int $column): array
+    public function getColumnWithFormulas(bool|float|string|int $column): array
     {
         $result = [];
         foreach ($this->matrix_original as $row) {
@@ -1245,10 +1246,13 @@ class matrix
         }
 
         if (is_string($name)) {
-            $name = explode(".", $name);
-            if (count($name) == 2) {
-                $row = $name[0];
-                $column = $name[1];
+            
+            $nameParts = explode(".", $name);
+
+            if (count($nameParts) == 2) {
+                
+                $row = $nameParts[0];
+                $column = $nameParts[1];
 
                 return $this->get($row, $column);
             }
@@ -1310,14 +1314,14 @@ class matrix
     /**
      * Insert a row before a row
      * 
-     * @param int $row
+     * @param bool|float|string|int $row
      * @param array<mixed> $data
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function insertBeforeRow(int $row, array $data): void
+    public function insertBeforeRow(bool|float|string|int $row, array $data): void
     {
         if (!$this->validateRow($data)) {
             throw new InvalidArgumentException('Row does not have the same number of elements as the first row');
@@ -1332,14 +1336,14 @@ class matrix
     /**
      * Insert a row after a row
      * 
-     * @param int $row
+     * @param bool|float|string|int $row
      * @param array<mixed> $data
      * 
      * @throws InvalidArgumentException
      * 
      * @return void
      */
-    public function insertAfterRow(int $row, array $data): void
+    public function insertAfterRow(bool|float|string|int $row, array $data): void
     {
         if (!$this->validateRow($data)) {
             throw new InvalidArgumentException('Row does not have the same number of elements as the first row');
@@ -1475,11 +1479,11 @@ class matrix
     /**
      * Check if a row exists
      * 
-     * @param mixed $row
+     * @param bool|float|string|int $row
      * 
      * @return bool
      */
-    public function existsRow(mixed $row): bool
+    public function existsRow(bool|float|string|int $row): bool
     {
         return array_key_exists($row, $this->matrix_original);
     }
@@ -1487,11 +1491,11 @@ class matrix
     /**
      * Check if a column exists
      * 
-     * @param mixed $column
+     * @param bool|float|string|int $column
      * 
      * @return bool
      */
-    public function existsColumn(mixed $column): bool
+    public function existsColumn(bool|float|string|int $column): bool
     {
         $firstRowIndex = array_key_first($this->matrix_original);
         

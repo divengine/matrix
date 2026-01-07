@@ -1,4 +1,6 @@
-# Div PHP Matrix 1.3
+# Div PHP Matrix
+
+[![Latest Stable Version](https://poser.pugx.org/divengine/matrix/v)](https://packagist.org/packages/divengine/matrix) [![Total Downloads](https://poser.pugx.org/divengine/matrix/downloads)](https://packagist.org/packages/divengine/matrix) [![Latest Unstable Version](https://poser.pugx.org/divengine/matrix/v/unstable)](https://packagist.org/packages/divengine/matrix) [![License](https://poser.pugx.org/divengine/matrix/license)](https://packagist.org/packages/divengine/matrix) [![PHP Version Require](https://poser.pugx.org/divengine/matrix/require/php)](https://packagist.org/packages/divengine/matrix)
 
 This dynamic matrix manipulation class in PHP goes beyond conventional operations, offering dynamic calculations and diverse output formats for versatile applications.
 

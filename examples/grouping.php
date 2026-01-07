@@ -31,6 +31,7 @@ $result = $table->groupBy([0], function($key, $group){
 }, true);
 
 echo "\n";
+
 $groupBy = new matrix(array_values($result));
 $groupBy->addRow(["Product", "Total"], onTop: true);
 echo $groupBy;
